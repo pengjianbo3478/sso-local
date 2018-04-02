@@ -1,0 +1,88 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context" xmlns:oxm="http://www.springframework.org/schema/oxm" xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+				http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+				http://www.springframework.org/schema/oxm http://www.springframework.org/schema/oxm/spring-oxm-4.0.xsd
+				http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+				http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd"
+>
+	<context:property-placeholder location="classpath:obanks.properties" />
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	<context:annotation-config />
+	<util:properties id="dsConfig" location="classpath:obanks.properties" />
+	<!--
+		<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="#{dsConfig['jdbc.driverClassName']}" />
+		<property name="jdbcUrl" value="#{dsConfig['jdbc.url']}" />
+		<property name="user" value="#{dsConfig['jdbc.username']}" />
+		<property name="password" value="#{dsConfig['jdbc.password']}" />
+		<property name="minPoolSize" value="5" />
+		<property name="maxPoolSize" value="60" />
+		<property name="maxIdleTime" value="600" />
+		<property name="acquireRetryAttempts" value="5" />
+		<property name="acquireRetryDelay" value="1000" />
+		<property name="acquireIncrement" value="3" />
+		<property name="autoCommitOnClose" value="false" />
+		<property name="breakAfterAcquireFailure" value="false" />
+		<property name="checkoutTimeout" value="10000" />
+		<property name="idleConnectionTestPeriod" value="600" />
+		<property name="initialPoolSize" value="5" />
+		<property name="maxStatements" value="0" />
+		<property name="testConnectionOnCheckout" value="false" />
+	-->
+	<!-- <property name="maxStatementsPerConnection" value="128" /> -->
+
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="url" value="#{dsConfig['jdbc.url']}" />
+		<property name="username" value="#{dsConfig['jdbc.username']}" />
+		<property name="password" value="#{dsConfig['jdbc.password']}" />
+
+		<property name="filters" value="stat" />
+
+		<property name="maxActive" value="20" />
+		<property name="initialSize" value="1" />
+		<property name="maxWait" value="60000" />
+		<property name="minIdle" value="1" />
+
+		<property name="timeBetweenEvictionRunsMillis" value="60000" />
+		<property name="minEvictableIdleTimeMillis" value="300000" />
+
+		<property name="validationQuery" value="SELECT 'x'" />
+		<property name="testWhileIdle" value="true" />
+		<property name="testOnBorrow" value="false" />
+		<property name="testOnReturn" value="false" />
+
+		<property name="poolPreparedStatements" value="true" />
+		<property name="maxPoolPreparedStatementPerConnectionSize" value="50" />
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations" value="classpath*:orm/*.xml" />
+	</bean>
+
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="annotationClass" value="org.springframework.stereotype.Repository" />
+		<property name="basePackage" value="cn.obanks" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="useCodeAsDefaultMessage" value="true" />
+		<property name="basename" value="classpath:messages" />
+	</bean>
+	<import resource="obanks-sso.xml" />
+	<import resource="obanks-context.xml" />
+</beans>

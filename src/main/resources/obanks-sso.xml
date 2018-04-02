@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:context="http://www.springframework.org/schema/context" xmlns:jee="http://www.springframework.org/schema/jee" xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd"
+>
+
+	<security:http use-expressions="true" access-decision-manager-ref="OBAccessDecisionManager" entry-point-ref="authenticationEntryPoint">
+		<security:custom-filter ref="OBInterceptor" before="FILTER_SECURITY_INTERCEPTOR" />
+		<security:custom-filter ref="OBCaptchaAuthenticationFilter" position="FORM_LOGIN_FILTER" />
+		<security:logout invalidate-session="true" logout-success-url="/login.html" logout-url="/logout" />
+		<security:session-management session-fixation-protection="migrateSession" invalid-session-url="/login.html">
+			<security:concurrency-control max-sessions="1" error-if-maximum-exceeded="true" />
+		</security:session-management>
+	</security:http>
+
+	<security:authentication-manager alias="authenticationManager">
+		<security:authentication-provider user-service-ref="OBUserDetailsService">
+			<security:password-encoder hash="md5" />
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+	<bean id="OBInterceptor" class="cn.obanks.security.web.OBFilterSecurityInterceptor">
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="accessDecisionManager" ref="OBAccessDecisionManager" />
+		<property name="securityMetadataSource" ref="OBFilterInvocationSecurityMetadataSource" />
+	</bean>
+
+	<bean class="org.springframework.security.web.access.DefaultWebInvocationPrivilegeEvaluator">
+		<constructor-arg ref="OBInterceptor" />
+	</bean>
+
+	<bean id="OBFilterInvocationSecurityMetadataSource" class="cn.obanks.security.web.OBSecurityMetadataSource">
+		<constructor-arg>
+			<value>${project.app.id}</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="OBUserDetailsService" class="cn.obanks.security.web.OBUserDetailsService">
+		<constructor-arg>
+			<value>${project.app.id}</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="OBAccessDecisionManager" class="cn.obanks.security.web.OBAccessDecisionManager" />
+
+	<bean id="authenticationEntryPoint" class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
+		<property name="loginFormUrl" value="/login.html" />
+	</bean>
+
+	<bean id="OBCaptchaAuthenticationFilter" class="cn.obanks.security.web.OBCaptchaAuthenticationFilter">
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="authenticationFailureHandler" ref="authenticationFailureHandler" />
+		<property name="authenticationSuccessHandler" ref="authenticationSuccessHandler" />
+		<property name="filterProcessesUrl" value="/authentication.do" />
+	</bean>
+
+	<bean id="authenticationSuccessHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler">
+		<property name="defaultTargetUrl" value="/index.do" />
+	</bean>
+
+	<bean id="authenticationFailureHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
+		<property name="defaultFailureUrl" value="/login.html" />
+	</bean>
+
+</beans>

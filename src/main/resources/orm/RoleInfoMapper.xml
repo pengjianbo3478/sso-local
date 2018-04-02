@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.obanks.mapper.RoleInfoMapper">
+	<resultMap id="BaseResultMap" type="cn.obanks.model.RoleInfo">
+		<id column="ID" property="id" />
+		<result column="ROLE_CODE" property="roleCode" />
+		<result column="ROLE_NAME" property="roleName" />
+		<result column="CATEGORY" property="category" />
+		<result column="REMARK" property="remark" />
+		<result column="CREATED_BY" property="createdBy" />
+		<result column="CREATED_DATE" property="createdDate" />
+		<result column="UPDATED_BY" property="updatedBy" />
+		<result column="UPDATED_DATE" property="updatedDate" />
+		<result column="DELETED_FLAG" property="deletedFlag" />
+	</resultMap>
+
+	<resultMap id="roleResourceMap" type="cn.obanks.model.RoleResource">
+		<result column="ROLE_CODE" property="roleCode" />
+		<result column="RESOURCE_URL" property="url" />
+	</resultMap>
+
+	<insert id="add" parameterType="cn.obanks.model.RoleInfo">
+		<selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS ID
+		</selectKey>
+		INSERT INTO ROLE_INFO VALUES(#{id},#{roleCode},#{roleName},#{category},#{remark},#{createdBy},#{createdDate},#{updatedBy},#{updatedDate},#{deletedFlag})
+	</insert>
+
+	<select id="getRoleResource" resultMap="roleResourceMap" parameterType="java.lang.String">
+		SELECT
+		T1.ROLE_CODE, T2.RESOURCE_URL
+		FROM
+		ROLE_INFO T1,
+		URL_RESOURCE T2,
+		ROLE_RESOURCE T3
+		WHERE
+		T1.ID = T3.ROLE_ID
+		AND T2.ID = T3.RESOURCE_ID
+		AND
+		T2.SYS_CODE=#{appId}
+	</select>
+
+	<select id="getGrantedAuthoritiesByAcctCode" parameterType="java.lang.String" resultMap="BaseResultMap">
+		SELECT
+		R.*
+		FROM
+		ROLE_INFO R,
+		CREDENTIAL C,
+		AUTHORITY A
+		WHERE
+		A.USER_ID = C.USER_ID
+		AND R.ID = A.ROLE_ID
+		AND C.ACCT_CODE =
+		#{acctCode}
+	</select>
+	
+	<select id="searchAll" resultMap="BaseResultMap">
+		SELECT * FROM ROLE_INFO WHERE DELETED_FLAG='N' 
+	</select>
+</mapper>

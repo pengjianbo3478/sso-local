@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.obanks.mapper.ResourceMapper">
+	<resultMap id="BaseResultMap" type="cn.obanks.model.Resource">
+		<id column="ID" property="id" />
+		<result column="RESOURCE_URL" property="resourceUrl" />
+		<result column="SYS_CODE" property="sysCode" />
+		<result column="IS_ENABLED" property="isEnabled" />
+		<result column="REMARK" property="remark" />
+		<result column="CREATED_BY" property="createdBy" />
+		<result column="CREATED_DATE" property="createdDate" />
+		<result column="UPDATED_BY" property="updatedBy" />
+		<result column="UPDATED_DATE" property="updatedDate" />
+		<result column="DELETED_FLAG" property="deletedFlag" />
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		ID, RESOURCE_URL,SYS_CODE,IS_ENABLED, REMARK, CREATED_BY, CREATED_DATE, UPDATED_BY, UPDATED_DATE,DELETED_FLAG
+	</sql>
+
+	<insert id="add" parameterType="cn.obanks.model.Resource">
+		<selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS ID
+		</selectKey>
+		INSERT INTO URL_RESOURCE VALUES(#{id},#{resourceUrl},#{sysCode},#{isEnabled},#{remark},#{createdBy},#{createdDate},#{updatedBy},#{updatedDate},#{deletedFlag})
+	</insert>
+
+	<!-- 分页查询条件 -->
+	<sql id="paginateCondition">
+		<where>
+			DELETED_FLAG='N'
+			<if test="condition!=null">
+				<if test="condition.keyword != null">
+					AND (SYS_CODE LIKE CONCAT('%',#{condition.keyword},'%') OR RESOURCE_URL LIKE CONCAT('%',#{condition.keyword},'%'))
+				</if>
+			</if>
+		</where>
+	</sql>
+
+
+</mapper>
